@@ -1,22 +1,33 @@
-﻿using System;
-using System.Xml.Linq;
-using FileScouter.Models;
+﻿using FileScouter.Models;
+using Microsoft.Extensions.Configuration;
 using Npgsql;
+using System;
+using System.Xml.Linq;
 
 namespace FileScouter
 {
     // should this be a static class and have the assigned value to config be 
-    internal class StoredProcedureCaller
+    static class StoredProcedureCaller
     {
         // This needs to be pulled from app.config and 
         // Need to figure out what to do for PostgreSQL
-        private static string connString = "";
+        private static readonly string _connString = "";
+
+        static StoredProcedureCaller()
+        {   
+            // Program is the class in your project and is used to find the user secrets element in your .csproj
+            var builder = new ConfigurationBuilder().AddUserSecrets<Program>();
+
+            var config = builder.Build();
+
+            _connString = config["FileScouterConn"];
+        }
 
         public static void TestProcessCsvTest()
         {
             try
             {
-                using var conn = new NpgsqlConnection(connString);
+                using var conn = new NpgsqlConnection(_connString);
                 conn.Open();
 
                 // using keyword here will automatically close and dispose connection to db
@@ -59,7 +70,7 @@ namespace FileScouter
                 // close procedure
                 procedureCall += ")";
 
-                using var conn = new NpgsqlConnection(connString);
+                using var conn = new NpgsqlConnection(_connString);
                 conn.Open();
 
                 using var cmd = new NpgsqlCommand(procedureCall, conn);
