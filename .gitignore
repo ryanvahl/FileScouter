@@ -415,3 +415,6 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Files being processed and moved
+Data/
