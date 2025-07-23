@@ -20,10 +20,8 @@ using FileScouter;
 
 try
 {
-    // Log loading config and assigning config values with Serilog
 
-    // Log object after values loaded as well to ensure input is correct
-
+    LoggingUtil.LogInfo("Loading configuration file");
     // 3 folders up because the FileScouter program exe will be the relative location, this folder location is 3 away from the config.xml
     ScouterConfig scouterConfig = new ScouterConfig()
     {
