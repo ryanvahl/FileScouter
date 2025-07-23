@@ -11,7 +11,8 @@ namespace FileScouter
     {        
         public static void ConfigureLoggingUtil()
         {
-            Log.Logger = new LoggerConfiguration().WriteTo.Console().WriteTo.File("FileScouterLog.txt", rollingInterval: RollingInterval.Day).CreateLogger();
+            // need something to signify where data appended should be, using an underscore after name here, could use dash or another acceptable symbol based on libary docs
+            Log.Logger = new LoggerConfiguration().WriteTo.Console().WriteTo.File(path: "../../../Data/FileScouterLog_.txt", rollingInterval: RollingInterval.Day).CreateLogger();
         }
         public static void LogInfo(string message)
         {

@@ -54,7 +54,17 @@ namespace FileScouter
             // the event as argument, where this assigns the function to handle event with lambda expression (anon function)
             fileScouter.Created += (s, e) => ScouterOnCreated(e, scouterBeginsConfig);
 
+            // stops file monitoring and releases logging resources if X was used to close console window
+            ConsoleCloseHandler.RegisterCallback(() =>
+            {
+                // ends the monitoring of file events
+                fileScouter.EnableRaisingEvents = false;
+                LoggingUtil.LogInfo("Files no longer being scouted. Logging closed and flushed.");
+                LoggingUtil.LogClose();
+            });
+
             LoggingUtil.LogInfo("Press any key to stop scouting");
+            // stops code execution until key press, note that event of file created in start folder will still cause other code in here to execute
             Console.ReadKey();
 
             // ends the monitoring of file events
@@ -64,10 +74,8 @@ namespace FileScouter
         }
 
         private static void ScouterOnCreated(FileSystemEventArgs e, ScouterConfig scouterOnCreatedConfigs)
-        {
-            // Log a file is detected with Serilog, use event arg variable e to to e.Name
+        {            
             LoggingUtil.LogInfo($"Detected file created {e.Name}");
-
             try
             {
                 string fileNameNoExt = Path.GetFileNameWithoutExtension(e.FullPath).ToLower();
