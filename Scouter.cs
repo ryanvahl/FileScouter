@@ -16,16 +16,21 @@ namespace FileScouter
 {
     internal class Scouter
     {
-        private static FileSystemWatcher? fileScouter;
+        private static FileSystemWatcher? fileScouter;        
 
         // public as it needs to be called outside of class
         public static void ScoutingBegins(ScouterConfig scouterBeginsConfig)
         {
-            Console.WriteLine(scouterBeginsConfig.StartFolder);
+            // start logging
+            LoggingUtil.ConfigureLoggingUtil();
+
+            //Console.WriteLine(scouterBeginsConfig.StartFolder);
+            LoggingUtil.LogInfo(scouterBeginsConfig.StartFolder);
             if (scouterBeginsConfig == null || string.IsNullOrEmpty(scouterBeginsConfig.StartFolder) || string.IsNullOrEmpty(scouterBeginsConfig.EndFolder))
             {
                 // Log one of these paths are null or has not been configured
-                Console.WriteLine("Null scouter config at start");
+                //Console.WriteLine("Null scouter config at start");
+                LoggingUtil.LogError("Null scouter config at start");
                 return;
             }
 
@@ -70,14 +75,21 @@ namespace FileScouter
             //    }                
             //}\
 
-            Console.WriteLine("Press any key to stop scouting");
+            //Console.WriteLine("Press any key to stop scouting");
+            LoggingUtil.LogInfo("Press any key to stop scouting");
             Console.ReadKey();
+
+            // ends the monitoring of file events
+            fileScouter.EnableRaisingEvents = false;
+            LoggingUtil.LogInfo("Files no longer being scouted. Logging closed and flushed.");
+            LoggingUtil.LogClose();
         }
 
         private static void ScouterOnCreated(FileSystemEventArgs e, ScouterConfig scouterOnCreatedConfigs)
         {
             // Log a file is detected with Serilog, use event arg variable e to to e.Name
-            Console.WriteLine("Detected file created");
+            //Console.WriteLine("Detected file created");
+            LoggingUtil.LogInfo("Detected file created");
 
             try
             {
@@ -85,17 +97,19 @@ namespace FileScouter
 
                 var processforFile = scouterOnCreatedConfigs?.Config?.Descendants("File");
 
-                Console.WriteLine($"Descendants of file {processforFile}");
+                //Console.WriteLine($"Descendants of file {processforFile}");
+                //LoggingUtil.LogInfo($"Descendants of file {processforFile}");
 
                 if (processforFile == null)
                 {
                     // Log null for file element
-                    Console.WriteLine("File element empty");
+                    //Console.WriteLine("File element empty");
+                    LoggingUtil.LogError("File element empty");
                     return;
                 }
 
                 string fileElSearchText = "";
-                //
+                // determine which text to use for compare against config file element blocks
                 if (fileNameNoExt.Contains('-'))
                 {
                     // find text between hyphen
@@ -122,13 +136,14 @@ namespace FileScouter
                 if (fileProcessEl == null)
                 {
                     // Log no matching process found for file
-                    Console.WriteLine("No matching process found");
+                    //Console.WriteLine("No matching process found");
+                    LoggingUtil.LogError("No matching process found");
                     return;
                 }
 
-                Console.WriteLine("success so far");
                 string? storedProc = fileProcessEl?.Element("StoredProcedure")?.Value;
-                Console.WriteLine("Use stored proc: " + storedProc);
+                //Console.WriteLine("Use stored proc: " + storedProc);
+                LoggingUtil.LogInfo("Use stored proc: " + storedProc);
                 bool isProcessSuccess = false;
                 string extension = Path.GetExtension(e.FullPath).ToLowerInvariant();
 
@@ -136,12 +151,14 @@ namespace FileScouter
                 {
                     case ".csv":
                         isProcessSuccess = ProcessCsv(e.FullPath, storedProc, fileProcessEl);
-                        Console.WriteLine("Use CSV process");
+                        //Console.WriteLine("Use CSV process");
+                        LoggingUtil.LogInfo("Use CSV process");
                         break;
                     case ".xls":
                     case ".xlsx":
                         isProcessSuccess = ProcessExcel(e.FullPath, extension, storedProc, fileProcessEl);
-                        Console.WriteLine("Use Excel process");
+                        //Console.WriteLine("Use Excel process");
+                        LoggingUtil.LogInfo("Use Excel process");
                         break;
                     default:
                         // Log file type not supported
@@ -155,7 +172,8 @@ namespace FileScouter
                     if (File.Exists(fileForEndFolder))
                     {
                         // Log file already exists
-                        Console.WriteLine("File exists");
+                        //Console.WriteLine("File exists");
+                        LoggingUtil.LogInfo("File exists. Attempting to rename with date before moving file.");
 
                         // This section would try to delete the file with try/catch and error for not being able to delete
                         // Maybe make it rename the file to move (not the existing file), need a count or something
@@ -166,42 +184,32 @@ namespace FileScouter
 
                     try
                     {
-                        Console.WriteLine($"Move file to {fileForEndFolder}");
+                        //Console.WriteLine($"Move file to {fileForEndFolder}");
+                        LoggingUtil.LogInfo($"Attempting to move file to {fileForEndFolder}");
                         File.Move(e.FullPath, fileForEndFolder);
-                        // Log the file was moved to the literal variable fileForEndFolder
                     }
                     catch (IOException ex)
                     {
-                        Console.WriteLine(ex.Message);
                         // Log error moving to file with string interpolation, ex.Message
+                        LoggingUtil.LogError($"Error moving file: {ex.Message}, file was NOT moved to {fileForEndFolder}");
+                        return;
                     }
                 }
                 else
                 {
                     // Log sp failed, file not moved
-                    Console.WriteLine($"Stored procedure failure, file was not moved.");
+                    //Console.WriteLine($"Stored procedure failure, file was not moved.");
+                    LoggingUtil.LogError($"Stored procedure failure, file was not moved.");
                 }
                 //Log if you choose to get the total rows affected in file, you would have to figure out how to get total rows affected
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Issue processing file somewhere after created {ex.Message}");
-                // Log error processing file, variable with files name and the exception
+                //Console.WriteLine($"Issue processing file somewhere after created {ex.Message}");
+                LoggingUtil.LogError($"Issue processing file somewhere after created {ex.Message}");
+                return;
             }            
         }
-
-        public static void ScoutingEnds()
-        {
-
-        }
-
-
-        /*
-         
-        Logic in reference code less readable than I want, use a function for each file extension that handles it's own database setup, execution and parsing of file
-         
-         
-         */
         private static bool ProcessCsv(string filePath, string storedProcEl, XElement fileProcessElForCsv)
         {
             try
@@ -211,7 +219,8 @@ namespace FileScouter
                 if (parametersEl == null)
                 {
                     // Log null for parameter element
-                    Console.WriteLine("Parameters element empty");
+                    //Console.WriteLine("Parameters element empty");
+                    LoggingUtil.LogError("Parameters element empty");
                     return false;
                 }
                 
@@ -228,7 +237,8 @@ namespace FileScouter
 
                 if (parameters == null)
                 {
-                    Console.WriteLine("No parameters found for stored procedure");
+                    //Console.WriteLine("No parameters found for stored procedure");
+                    LoggingUtil.LogError("No parameters found for stored procedure");
                     return false;
                 }
 
@@ -237,7 +247,8 @@ namespace FileScouter
 
                 if (fileLines.Length <= 1)
                 {
-                    Console.WriteLine("CSV does not contain data.");
+                    //Console.WriteLine("CSV does not contain data.");
+                    LoggingUtil.LogError("CSV does not contain data.");
                     return false;
                 }
                 
@@ -250,7 +261,8 @@ namespace FileScouter
                     // if row data does not equal the number of parameters for procedure then this will not work, order is crucial
                     if (cols.Length != parameters.Count)
                     {
-                        Console.WriteLine("Number of columns with data in rows do not match number of parameter elements in parameters element of config");
+                        //Console.WriteLine("Number of columns with data in rows do not match number of parameter elements in parameters element of config");
+                        LoggingUtil.LogError("Number of columns with data in rows do not match number of parameter elements in parameters element of config");
                         return false;
                     }
 
@@ -272,7 +284,8 @@ namespace FileScouter
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"CSV processing error {ex.Message}");
+                //Console.WriteLine($"CSV processing error {ex.Message}");
+                LoggingUtil.LogError($"CSV processing error {ex.Message}");
                 return false;
             }            
         }
@@ -286,7 +299,8 @@ namespace FileScouter
                 if (parametersEl == null)
                 {
                     // Log null for parameter element
-                    Console.WriteLine("Parameters element empty");
+                    //Console.WriteLine("Parameters element empty");
+                    LoggingUtil.LogError("Parameters element empty");
                     return false;
                 }
 
@@ -303,7 +317,8 @@ namespace FileScouter
 
                 if (parameters == null)
                 {
-                    Console.WriteLine("No parameters found for stored procedure");
+                    //Console.WriteLine("No parameters found for stored procedure");
+                    LoggingUtil.LogError("No parameters found for stored procedure");
                     return false;
                 }
 
@@ -316,7 +331,8 @@ namespace FileScouter
                     var worksheet = package.Workbook.Worksheets.FirstOrDefault();
                     if (worksheet == null)
                     {
-                        Console.WriteLine("No worksheet found in Excel file");
+                        //Console.WriteLine("No worksheet found in Excel file");
+                        LoggingUtil.LogError("No worksheet found in Excel file");
                         return false;
                     }
 
@@ -324,7 +340,8 @@ namespace FileScouter
                     // object PER column of data for each row
                     if (worksheet.Dimension.Columns != parameters.Count)
                     {
-                        Console.WriteLine("Number of columns with data in rows do not match number of parameter elements in parameters element of config");
+                        //Console.WriteLine("Number of columns with data in rows do not match number of parameter elements in parameters element of config");
+                        LoggingUtil.LogError("Number of columns with data in rows do not match number of parameter elements in parameters element of config");
                         return false;
                     }
                     else
@@ -354,35 +371,17 @@ namespace FileScouter
                     }
 
                 }
-                // xls processing Later Time Finish XlS
-                //else
-                //{
-                //    using var stream = File.Open(filePath, FileMode.Open, FileAccess.Read);
-                //    using var reader = ExcelReaderFactory.CreateReader(stream);
-                //    var table = reader.AsDataSet().Tables[0];
-
-                //    for (int i = 1; i < table.Rows.Count; i++)
-                //    {
-                //        var row = table.Rows[i];
-
-                //        var rowData = new string[row.ItemArray.Length];
-                //        for (int col = 0; col < row.ItemArray.Length; col++)
-                //        {
-                //            rowData[col] = row[col].ToString();
-                //        }
-
-                //        bool isSuccess = false;// this needs to be the stored proc function class, the function that connects to db and processes the file data by inserting into table(s)
-                //        if (!isSuccess)
-                //        {
-                //            return false;
-                //        }
-                //    }
-                //}
-                return true;
+                else
+                {
+                    LoggingUtil.LogError("Extension not xlsx");
+                    return false;
+                }
+                    return true;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error processing Excel file: {ex.Message}");
+                //Console.WriteLine($"Error processing Excel file: {ex.Message}");
+                LoggingUtil.LogError($"Error processing Excel file: {ex.Message}");
                 return false;
             }            
         }
