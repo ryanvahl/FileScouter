@@ -1,7 +1,10 @@
-﻿using FileScouter.Models;
+﻿using FileScouter;
+using FileScouter.Models;
 using Microsoft.Extensions.Configuration;
 using Npgsql;
+using NpgsqlTypes;
 using System;
+using System.Globalization;
 using System.Xml.Linq;
 
 namespace FileScouter
@@ -40,7 +43,8 @@ namespace FileScouter
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                //Console.WriteLine(ex.Message);
+                LoggingUtil.LogError(ex.Message);
             }
             // Log completion
         }
@@ -94,7 +98,20 @@ namespace FileScouter
                         }
                         else if (param.Type.ToLower() == "date")
                         {
-                            cmd.Parameters.AddWithValue(param.Param, DateTime.Parse(param.Value));
+                            string[] formats = {"MM/dd/yy", "MM/dd/yyyy"};
+                            DateTime parsedfileDate;
+                            try
+                            {
+                                // this can ONLY support files with the format here for date, but you can create a string array and provide a collection of different formats in strings, then provide that array where the format string is currently for ParseExact
+                                DateTime parsedFileDate = DateTime.ParseExact(param.Value, formats, CultureInfo.InvariantCulture, DateTimeStyles.None);
+                                // the NpgsqlDbType.Date ignores the time portion and automatically maps DateTime to Date in PostgreSQL
+                                cmd.Parameters.AddWithValue(param.Param, NpgsqlDbType.Date, parsedFileDate);
+                            }
+                            catch (Exception ex)
+                            {
+                                LoggingUtil.LogError(ex.Message);
+                                return false;
+                            }
                         }
                         else
                         {
@@ -103,7 +120,8 @@ namespace FileScouter
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine(ex.Message);
+                        //Console.WriteLine(ex.Message);
+                        LoggingUtil.LogError(ex.Message);
                         return false;
                     }                    
                 }
@@ -113,23 +131,17 @@ namespace FileScouter
             }
             catch (IndexOutOfRangeException ex)
             {
-                Console.WriteLine(ex.Message);
+                //Console.WriteLine(ex.Message);
+                LoggingUtil.LogError(ex.Message);
                 return false;
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                //Console.WriteLine(ex.Message);
+                LoggingUtil.LogError(ex.Message);
                 return false;
             }
 
-            //// rows from command
-            //if (result <= 0)
-            //{
-            //    Console.WriteLine($"Error, rows changed: {result}");
-            //    return false;
-            //}
-
-            Console.WriteLine("Done with query");
             return true;
         }
 

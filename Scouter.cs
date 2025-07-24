@@ -20,9 +20,8 @@ namespace FileScouter
 
         public static void ScoutingBegins(ScouterConfig scouterBeginsConfig)
         {
-            // start logging
-            LoggingUtil.ConfigureLoggingUtil();
-            LoggingUtil.LogInfo(scouterBeginsConfig.StartFolder);
+            LoggingUtil.LogInfo("Config file loaded successfully");
+            LoggingUtil.LogInfo($"Scouting files in: {scouterBeginsConfig.StartFolder}");
             if (scouterBeginsConfig == null || string.IsNullOrEmpty(scouterBeginsConfig.StartFolder) || string.IsNullOrEmpty(scouterBeginsConfig.EndFolder))
             {
                 // Log one of these paths are null or has not been configured

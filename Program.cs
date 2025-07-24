@@ -20,7 +20,8 @@ using FileScouter;
 
 try
 {
-
+    // start logging
+    LoggingUtil.ConfigureLoggingUtil();
     LoggingUtil.LogInfo("Loading configuration file");
     // 3 folders up because the FileScouter program exe will be the relative location, this folder location is 3 away from the config.xml
     ScouterConfig scouterConfig = new ScouterConfig()
@@ -37,5 +38,5 @@ try
 }
 catch (Exception ex)
 {
-    Console.WriteLine($"Loading config error: {ex.Message}");
+    LoggingUtil.LogError($"Loading config error: {ex.Message}");
 }
