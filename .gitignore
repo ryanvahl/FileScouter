@@ -416,5 +416,5 @@ FodyWeavers.xsd
 *.msm
 *.msp
 
-# Files being processed and moved
-Data/
+# Ignore log Files
+Data/FileScouterLog_*
