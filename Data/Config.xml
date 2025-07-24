@@ -90,6 +90,4 @@
 		<EndFolder>..\..\..\Data\End</EndFolder>
 		<ConfigFile>..\..\..\Data\config.xml</ConfigFile>
 	</FilePaths>
-	<!-- How to manage Dev and Prod -->
-	<ConnectionString>connection for PostgreSQL</ConnectionString>
 </Config>
