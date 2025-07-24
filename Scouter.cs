@@ -62,7 +62,7 @@ namespace FileScouter
                 LoggingUtil.LogClose();
             });
 
-            LoggingUtil.LogInfo("Press any key to stop scouting");
+            LoggingUtil.LogInfo("Press any key during this process to stop scouting");
             // stops code execution until key press, note that event of file created in start folder will still cause other code in here to execute
             Console.ReadKey();
 
@@ -145,13 +145,17 @@ namespace FileScouter
 
                     if (File.Exists(fileForEndFolder))
                     {
-                        LoggingUtil.LogInfo("File exists. Attempting to rename with date before moving file.");
-
-                        // This section would try to delete the file with try/catch and error for not being able to delete
-                        // Maybe make it rename the file to move (not the existing file), need a count or something
-
-                        // this return will have to be in catch when using try/catch if error occurs
-                        return;
+                        try
+                        {
+                            LoggingUtil.LogInfo("File exists. Attempting to delete before moving file.");
+                            File.Delete(fileForEndFolder);
+                            LoggingUtil.LogInfo("File deleted");
+                        }
+                        catch (Exception ex)
+                        {
+                            LoggingUtil.LogError($"File could not be deleted");
+                            return;
+                        }
                     }
 
                     try
@@ -164,10 +168,13 @@ namespace FileScouter
                         LoggingUtil.LogError($"Error moving file: {ex.Message}, file was NOT moved to {fileForEndFolder}");
                         return;
                     }
+
+                    LoggingUtil.LogInfo("File moved successfully");
                 }
                 else
                 {
                     LoggingUtil.LogError($"Stored procedure failure, file was not moved.");
+                    return;
                 }
             }
             catch (Exception ex)

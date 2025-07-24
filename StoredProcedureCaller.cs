@@ -12,8 +12,6 @@ namespace FileScouter
     // should this be a static class and have the assigned value to config be 
     static class StoredProcedureCaller
     {
-        // This needs to be pulled from app.config and 
-        // Need to figure out what to do for PostgreSQL
         private static readonly string _connString = "";
 
         static StoredProcedureCaller()
@@ -25,30 +23,6 @@ namespace FileScouter
 
             _connString = config["FileScouterConn"];
         }
-
-        public static void TestProcessCsvTest()
-        {
-            try
-            {
-                using var conn = new NpgsqlConnection(_connString);
-                conn.Open();
-
-                // using keyword here will automatically close and dispose connection to db
-                using var cmd = new NpgsqlCommand("CALL usp_insert_customers_csv(@first_name_usp, @last_name_usp, @age_usp)", conn);
-                cmd.Parameters.AddWithValue("first_name_usp", "test2");
-                cmd.Parameters.AddWithValue("last_name_usp", "person2");
-                cmd.Parameters.AddWithValue("age_usp", 200);
-
-                cmd.ExecuteNonQuery();
-            }
-            catch (Exception ex)
-            {
-                //Console.WriteLine(ex.Message);
-                LoggingUtil.LogError(ex.Message);
-            }
-            // Log completion
-        }
-
         public static bool ProcessDataToDb(string storedProc, string filePath, List<Parameters> dbParameters)
         {
             var result = 0;
@@ -120,7 +94,6 @@ namespace FileScouter
                     }
                     catch (Exception ex)
                     {
-                        //Console.WriteLine(ex.Message);
                         LoggingUtil.LogError(ex.Message);
                         return false;
                     }                    
@@ -131,7 +104,6 @@ namespace FileScouter
             }
             catch (IndexOutOfRangeException ex)
             {
-                //Console.WriteLine(ex.Message);
                 LoggingUtil.LogError(ex.Message);
                 return false;
             }
@@ -143,70 +115,6 @@ namespace FileScouter
             }
 
             return true;
-        }
-
-        //public static bool ProcessCsvToDb(string storedProc, string filePath, XElement fileProcessElforCsv, string[] cols, int rowNum)
-        //{
-        //    // This needs to do what works above but dynamically building it. It is sort of dynamic in the sense you don't have to keep editing the code, just the config
-        //    // can't know what the file will look like until shown it anyway
-
-        //    //string commandForProc = $"CALL {storedProc}(";
-        //    //foreach(var col in cols)
-        //    //{
-        //    //    commandForProc += $"@{col},";
-        //    //}
-        //    //// get rid of last comma, since last param in procedure
-        //    //commandForProc = commandForProc.Trim(',');
-        //    //commandForProc += ")";
-
-        //    // create param for command in procedure, list will be used twice
-        //    List<string> paramsForCmd = new List<string>();
-        //    int i = 1;
-        //    foreach (var col in cols)
-        //    {
-        //        string param = "@param" + i.ToString();
-        //        paramsForCmd.Add(param);
-        //        i++;
-        //    }
-
-        //    string commandForProc = $"CALL {storedProc}(";
-        //    foreach (var item in paramsForCmd)
-        //    {
-        //        commandForProc += item + ",";
-        //    }
-        //    // get rid of last comma, since last param in procedure
-        //    commandForProc = commandForProc.Trim(',');
-        //    commandForProc += ")";
-
-        //    try
-        //    {
-        //        using var conn = new NpgsqlConnection(connString);
-        //        conn.Open();
-        //                    // get rid of last comma, since last param in procedure
-        //        using var cmd = new NpgsqlCommand(commandForProc, conn);
-
-        //        foreach (var item in paramsForCmd)
-        //        {
-        //            cmd.Parameters.AddWithValue(item, );
-        //        }
-        //        // add 1, 2, 3, etc to the param to give a diff param name to each value
-        //        //int i = 1;
-        //        //foreach (var col in cols)
-        //        //{
-        //        //    string param = "@param" + i.ToString();
-        //        //    cmd.Parameters.AddWithValue(param, col);
-        //        //    i++;
-        //        //}
-
-        //        //cmd.ExecuteNonQuery();
-        //    }
-        //    catch(Exception ex)
-        //    {
-        //        Console.WriteLine(ex.Message);
-        //    }
-
-        //    return false;
-        //}
-
+        }       
     }
 }

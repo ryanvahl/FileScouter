@@ -1,6 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Config>
-	<!-- These are suggestions but you can design this config file how you think is best, it is pretty slim as it is so not sure what else you could do -->
+<Config>	
 	<Files>
 		<!-- Each File tag block is to process a file type and possibly a specific name or word(s) in the name. The stored procedure in the tag here is the sp to process this specific file -->
 		<File>
@@ -84,10 +83,9 @@
 			</Parameters>
 		</File>
 	</Files>
-	<!-- These are relative to the project file structure based on this config files location -->
-	<!-- Store these paths in a data folder to have better organization -->
+	<!-- These are relative to the FileScouter exe location -->
 	<FilePaths>
-		<!-- example path to file to process relative to this config.xml file location -->
+		<!-- path to file to process relative to this config.xml file location -->
 		<StartFolder>..\..\..\Data\Start</StartFolder>
 		<EndFolder>..\..\..\Data\End</EndFolder>
 		<ConfigFile>..\..\..\Data\config.xml</ConfigFile>
